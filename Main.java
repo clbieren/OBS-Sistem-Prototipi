@@ -1,105 +1,100 @@
-// Main.java
-// Çok sade tutuldu: sadece ana menü ve rollere delege eder.
-
-import java.util.*;
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Comparator; // alfabetik sıralama için
 
 public class Main {
-    static Scanner in = new Scanner(System.in);
-    static StudentManager studentMgr = new StudentManager();
-    static TeacherManager teacherMgr = new TeacherManager();
-    static CourseManager courseMgr = new CourseManager();
 
-    public static void main(String[] args) {
-        while (true) {
-            System.out.println("\nOBS'ye Hoşgeldiniz!");
-            System.out.println("1 - Admin Girişi");
-            System.out.println("2 - Öğretmen Girişi");
-            System.out.println("3 - Öğrenci Girişi");
-            System.out.println("0 - Çıkış");
-            System.out.print("Lütfen seçiminizi yapınız: ");
-            String choice = in.nextLine();
-            switch (choice) {
-                case "1": adminLogin(); break;
-                case "2": teacherMgr.handleTeacherSession(in, courseMgr, studentMgr); break; // tamamen teacherManager'a delege
-                case "3": studentMgr.handleStudentSession(in, courseMgr, teacherMgr); break; // tamamen studentManager'a delege
-                case "0": System.out.println("Çıkılıyor..."); return;
-                default: System.out.println("Geçersiz seçim.");
+    //  Student sinifi
+    static class Student {
+        String name;
+        int age;
+        double grade;
+
+        public Student(String name, int age, double grade) {
+            this.name = name;
+            this.age = age;
+            this.grade = grade;
+        }
+
+        @Override
+        public String toString() {
+            return "Name: " + name + ", Age: " + age + ", Grade: " + grade;
+        }
+    }
+
+    // Studentmanager sinifi
+    static class StudentManager {
+        ArrayList<Student> students = new ArrayList<>();
+
+        public void addStudent(Student s) {
+            students.add(s);
+            students.sort(Comparator.comparing(student -> student.name)); // alfabetik sıralama
+            System.out.println("Eklendi: " + s.name);
+        }
+
+        public void listStudents() {
+            if (students.isEmpty()) {
+                System.out.println("Öğrenci yok.");
+                return;
+            }
+            System.out.println("\n--- Öğrenci Listesi ---");
+            for (Student s : students) {
+                System.out.println(s);
             }
         }
     }
 
-    // ---------------- Admin ----------------
-    private static void adminLogin() {
-        System.out.print("\nAdmin şifresini giriniz (veya 'q' geri): ");
-        String password = in.nextLine();
-        if (password.equalsIgnoreCase("q")) return;
-        if (password.equals("admin123")) {
-            System.out.println("Giriş Başarılı.");
-            adminPanel();
-        } else {
-            System.out.println("Hatalı şifre.");
-        }
-    }
+    //  Main metod
+    public static void main(String[] args) {
+        StudentManager manager = new StudentManager();
+        Scanner input = new Scanner(System.in);
 
-    // Admin paneli de mümkün olduğunca sade: yönetim işlemlerini ilgili manager'lara devreder.
-    private static void adminPanel() {
         while (true) {
-            System.out.println("\n--- ADMIN PANELİ ---");
-            System.out.println("1- Öğretmen Ekle");
-            System.out.println("2- Öğretmen Sil");
-            System.out.println("3- Öğretmenleri Listele");
-            System.out.println("4- Öğrenci Ekle");
-            System.out.println("5- Öğrenci Sil");
-            System.out.println("6- Ders Ekle");
-            System.out.println("7- Dersi Öğretmene Ata");
-            System.out.println("8- Dersleri Listele");
-            System.out.println("9- Tüm Verileri Sıfırla");
-            System.out.println("0- Çıkış");
+            System.out.println("\n1 - Öğrenci Ekle");
+            System.out.println("2 - Öğrencileri Listele");
+            System.out.println("3 - Çıkış");
             System.out.print("Seçim: ");
-            String ch = in.nextLine();
-            if (ch.equalsIgnoreCase("reset") || ch.equals("9")) {
-                adminResetAllData();
+
+            int secim;
+            if (input.hasNextInt()) {
+                secim = input.nextInt();
+                input.nextLine(); // buffer temizle
+            } else {
+                System.out.println("Geçersiz seçim!");
+                input.nextLine();
                 continue;
             }
-            switch (ch) {
-                case "1": teacherMgr.adminAddTeachersLoop(in); break;
-                case "2": teacherMgr.adminRemoveTeacher(in); break;
-                case "3": teacherMgr.adminListTeachers(); break;
-                case "4": studentMgr.adminAddStudentsLoop(in); break;
-                case "5": studentMgr.adminRemoveStudent(in); break;
-                case "6": courseMgr.adminAddCourse(in); break;
-                case "7": courseMgr.adminAssignCourse(in, teacherMgr); break;
-                case "8": courseMgr.adminListCourses(teacherMgr); break;
-                case "0": return;
-                default: System.out.println("Geçersiz seçim.");
+
+            if (secim == 1) {
+                System.out.print("İsim: ");
+                String name = input.nextLine();
+
+                System.out.print("Yaş: ");
+                int age = input.nextInt();
+
+                System.out.print("Not: ");
+                double grade = input.nextDouble();
+                input.nextLine(); // buffer temizle
+
+                Student s = new Student(name, age, grade);
+                manager.addStudent(s);
+
+            } else if (secim == 2) {
+                manager.listStudents();
+
+            } else if (secim == 3) {
+                System.out.println("Program kapatılıyor...");
+                break;
+
+            } else {
+                System.out.println("Geçersiz seçim.");
             }
         }
-    }
 
-    // Admin: tüm verileri sıfırlama (yedekleme + truncate + manager reload)
-    private static void adminResetAllData() {
-        System.out.println("UYARI: Tüm veriler kalıcı olarak silinecek!");
-        System.out.print("Devam etmek istiyor musunuz? (evet/hayır): ");
-        String ans = in.nextLine();
-        if (!ans.equalsIgnoreCase("evet")) {
-            System.out.println("İşlem iptal edildi.");
-            return;
-        }
-
-        // Otomatik yedekleme - oluşturulan .bak dosyalarına kopyalanır
-        FileHelper.backupFile("students.txt", "students.bak.txt");
-        FileHelper.backupFile("teachers.txt", "teachers.bak.txt");
-        FileHelper.backupFile("courses.txt", "courses.bak.txt");
-        FileHelper.backupFile("grades.txt", "grades.bak.txt");
-
-        // Gerçek sıfırlama
-        FileHelper.resetAllData();
-
-        // Bellekteki verileri de güncelle
-        studentMgr.loadStudents();
-        teacherMgr.loadTeachers();
-        courseMgr.loadCourses();
-
-        System.out.println("Tüm veriler sıfırlandı. Önemli dosyalar yedeklendi: *.bak.txt");
+        input.close();
     }
 }
+
+
